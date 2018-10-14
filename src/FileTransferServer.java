@@ -1,3 +1,4 @@
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -5,6 +6,7 @@ import java.math.RoundingMode;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.DecimalFormat;
+import java.util.Scanner;
 
 /**
  * 文件传输Server端
@@ -14,6 +16,8 @@ public class FileTransferServer extends ServerSocket {
     public static final int SERVER_PORT = 8899;
 
     private static DecimalFormat df = null;
+
+    FileDESHelper fileDESHelper = new FileDESHelper("123456");
 
     static {
         // 设置数字格式，保留一位有效小数
@@ -27,7 +31,7 @@ public class FileTransferServer extends ServerSocket {
         super(SERVER_PORT);
     }
 
-    public FileTransferServer(int serverPort) throws Exception{
+    public FileTransferServer(int serverPort) throws Exception {
         super(serverPort);
     }
 
@@ -36,13 +40,7 @@ public class FileTransferServer extends ServerSocket {
      */
     public void load() throws Exception {
         while (true) {
-            // server尝试接收其他Socket的连接请求，server的accept方法是阻塞式的
             Socket socket = this.accept();
-            /**
-             * 我们的服务端处理客户端的连接请求是同步进行的， 每次接收到来自客户端的连接请求后，
-             * 都要先跟当前的客户端通信完之后才能再处理下一个连接请求。 这在并发比较多的情况下会严重影响程序的性能，
-             * 为此，我们可以把它改为如下这种异步处理与客户端通信的方式
-             */
             // 每接收到一个Socket就建立一个新的线程来处理它
             new Thread(new Task(socket)).start();
         }
@@ -71,12 +69,12 @@ public class FileTransferServer extends ServerSocket {
                 // 文件名和长度
                 String fileName = dis.readUTF();
                 long fileLength = dis.readLong();
-                File directory = new File("D:\\FTCache");
+                File directory = new File("c:\\FileTransferDir");
                 if (!directory.exists()) {
                     directory.mkdir();
                 }
-                File file = new File(directory.getAbsolutePath() + File.separatorChar + fileName);
-                fos = new FileOutputStream(file);
+                File receiveFile = new File(directory.getAbsolutePath() + File.separatorChar + fileName);
+                fos = new FileOutputStream(receiveFile);
 
                 // 开始接收文件
                 byte[] bytes = new byte[1024];
@@ -86,6 +84,27 @@ public class FileTransferServer extends ServerSocket {
                     fos.flush();
                 }
                 System.out.println("======== 文件接收成功 [File Name：" + fileName + "] [Size：" + getFormatFileSize(fileLength) + "] ========");
+                System.out.println("接收文件路径为：" + receiveFile.getAbsolutePath());
+
+                if (receiveFile.getAbsolutePath().endsWith(".des")) {
+                    System.out.println("该文件是加密文件，是否对其进行解密(y/n):");
+                    Scanner scanner = new Scanner(System.in);
+                    String cmd = scanner.next();
+                    while (true) {
+                        if (cmd.equals("y")) {
+                            decryptFile(receiveFile);
+                            break;
+                        } else if (cmd.equals("n")) {
+                            break;
+                        } else {
+                            System.out.println("您的输入有误，请重新输入(y/n)：");
+                            continue;
+                        }
+                    }
+                }
+                System.out.println("\n\n文件接收服务继续运行中\nIP："
+                        + getLocalSocketAddress() + "  \n服务端口：" + getLocalPort());
+                System.out.println("监听文件传输中....");
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -99,6 +118,23 @@ public class FileTransferServer extends ServerSocket {
                 }
             }
         }
+    }
+
+    private boolean decryptFile(File file) {
+        if (!file.exists()) {
+            return false;
+        }
+        String srcFilePath = file.getAbsolutePath();
+        String destFilePath = file.getAbsolutePath().subSequence(0, srcFilePath.length() - ".des".length()).toString();
+        try {
+            fileDESHelper.decrypt(file.getAbsolutePath(), destFilePath);
+            System.out.println("对收到的文件进行解密操作成功！\n解密文件路径为：" + destFilePath);
+            return true;
+        } catch (Exception e) {
+            System.out.println("对接收到的文件进行解密操作失败！");
+            return false;
+        }
+
     }
 
     /**
@@ -118,11 +154,5 @@ public class FileTransferServer extends ServerSocket {
             return df.format(size) + "KB";
         }
         return length + "B";
-    }
-
-    /**
-     * 入口
-     */
-    public static void main(String[] args) {
     }
 }
