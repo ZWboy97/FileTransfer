@@ -1,2 +1,4 @@
 # FileTransfer
 Java FileTransferClient and FileTransferServer
+采用Java实现两个计算机之间的文件传输功能，同时在传输时候提供文件加密服务。
+分为发送client端和接收服务端，其中接收server支持多用户并发文件传输。
