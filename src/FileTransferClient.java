@@ -4,17 +4,9 @@ import java.io.FileInputStream;
 import java.net.Socket;
 
 /**
- * 文件传输Client端<br>
- * 功能说明：
- *
- * @author 大智若愚的小懂
- * @Date 2016年09月01日
- * @version 1.0
+ * 文件传输Client端
  */
 public class FileTransferClient extends Socket {
-
-    private static final String SERVER_IP = "127.0.0.1"; // 服务端IP
-    private static final int SERVER_PORT = 8899; // 服务端端口
 
     private Socket client;
 
@@ -22,24 +14,13 @@ public class FileTransferClient extends Socket {
 
     private DataOutputStream dos;
 
-    /**
-     * 构造函数<br/>
-     * 与服务器建立连接
-     * @throws Exception
-     */
-    public FileTransferClient() throws Exception {
-        super(SERVER_IP, SERVER_PORT);
+    public FileTransferClient(String address,int port) throws Exception{
+        super(address,port);
         this.client = this;
-        System.out.println("Cliect[port:" + client.getLocalPort() + "] 成功连接服务端");
     }
 
-    /**
-     * 向服务端传输文件
-     * @throws Exception
-     */
-    public void sendFile() throws Exception {
+    public void sendFile(File file) throws Exception {
         try {
-            File file = new File("E:\\JDK1.6中文参考手册(JDK_API_1_6_zh_CN).CHM");
             if(file.exists()) {
                 fis = new FileInputStream(file);
                 dos = new DataOutputStream(client.getOutputStream());
@@ -74,18 +55,4 @@ public class FileTransferClient extends Socket {
             client.close();
         }
     }
-
-    /**
-     * 入口
-     * @param args
-     */
-    public static void main(String[] args) {
-        try {
-            FileTransferClient client = new FileTransferClient(); // 启动客户端连接
-            client.sendFile(); // 传输文件
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 }

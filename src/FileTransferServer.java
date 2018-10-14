@@ -11,7 +11,7 @@ import java.text.DecimalFormat;
  */
 public class FileTransferServer extends ServerSocket {
 
-    private static final int SERVER_PORT = 8899; // 服务端端口
+    public static final int SERVER_PORT = 8899;
 
     private static DecimalFormat df = null;
 
@@ -27,9 +27,12 @@ public class FileTransferServer extends ServerSocket {
         super(SERVER_PORT);
     }
 
+    public FileTransferServer(int serverPort) throws Exception{
+        super(serverPort);
+    }
+
     /**
-     * 使用线程处理每个客户端传输的文件
-     * @throws Exception
+     * 线程处理每个客户端传输的文件,服务端支持多线程接收
      */
     public void load() throws Exception {
         while (true) {
@@ -69,7 +72,7 @@ public class FileTransferServer extends ServerSocket {
                 String fileName = dis.readUTF();
                 long fileLength = dis.readLong();
                 File directory = new File("D:\\FTCache");
-                if(!directory.exists()) {
+                if (!directory.exists()) {
                     directory.mkdir();
                 }
                 File file = new File(directory.getAbsolutePath() + File.separatorChar + fileName);
@@ -78,7 +81,7 @@ public class FileTransferServer extends ServerSocket {
                 // 开始接收文件
                 byte[] bytes = new byte[1024];
                 int length = 0;
-                while((length = dis.read(bytes, 0, bytes.length)) != -1) {
+                while ((length = dis.read(bytes, 0, bytes.length)) != -1) {
                     fos.write(bytes, 0, length);
                     fos.flush();
                 }
@@ -87,32 +90,31 @@ public class FileTransferServer extends ServerSocket {
                 e.printStackTrace();
             } finally {
                 try {
-                    if(fos != null)
+                    if (fos != null)
                         fos.close();
-                    if(dis != null)
+                    if (dis != null)
                         dis.close();
                     socket.close();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
     }
 
     /**
      * 格式化文件大小
-     * @param length
-     * @return
      */
     private String getFormatFileSize(long length) {
         double size = ((double) length) / (1 << 30);
-        if(size >= 1) {
+        if (size >= 1) {
             return df.format(size) + "GB";
         }
         size = ((double) length) / (1 << 20);
-        if(size >= 1) {
+        if (size >= 1) {
             return df.format(size) + "MB";
         }
         size = ((double) length) / (1 << 10);
-        if(size >= 1) {
+        if (size >= 1) {
             return df.format(size) + "KB";
         }
         return length + "B";
@@ -120,14 +122,7 @@ public class FileTransferServer extends ServerSocket {
 
     /**
      * 入口
-     * @param args
      */
     public static void main(String[] args) {
-        try {
-            FileTransferServer server = new FileTransferServer(); // 启动服务端
-            server.load();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
