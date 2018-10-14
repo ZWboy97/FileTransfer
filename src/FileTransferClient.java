@@ -9,9 +9,7 @@ import java.net.Socket;
 public class FileTransferClient extends Socket {
 
     private Socket client;
-
     private FileInputStream fis;
-
     private DataOutputStream dos;
 
     public FileTransferClient(String address,int port) throws Exception{
@@ -19,7 +17,8 @@ public class FileTransferClient extends Socket {
         this.client = this;
     }
 
-    public void sendFile(File file) throws Exception {
+    public boolean sendFile(File file) throws Exception {
+        boolean result = false;
         try {
             if(file.exists()) {
                 fis = new FileInputStream(file);
@@ -44,6 +43,7 @@ public class FileTransferClient extends Socket {
                 }
                 System.out.println();
                 System.out.println("======== 文件传输成功 ========");
+                result = true;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -54,5 +54,6 @@ public class FileTransferClient extends Socket {
                 dos.close();
             client.close();
         }
+        return result;
     }
 }
